@@ -3,24 +3,33 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # Copier le code source C# dans le conteneur
-COPY src/ ./src/
+COPY WebApplication1/ ./src/
 
 # Compiler l'application C#
 RUN dotnet publish ./src -c Release -o /out
 
 # Étape 2 : Créer l'image finale avec SteamCMD et le serveur CS2
-FROM debian:bullseye-slim
-
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 # Installer les dépendances requises pour SteamCMD et CS2
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         lib32gcc-s1 \
+        net-tools \
         curl \
         unzip \
         lib32stdc++6 \
+        libc6-dev \
+        wget \
         libtcmalloc-minimal4 && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb &&  \
+    dpkg -i packages-microsoft-prod.deb &&  \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        dotnet-sdk-8.0 \
+        aspnetcore-runtime-8.0 \
+        dotnet-runtime-8.0
 
 # Créer un utilisateur non-root pour exécuter le serveur
 RUN useradd -m cs2user
@@ -32,7 +41,8 @@ WORKDIR /home/cs2user
 COPY --from=build /out /home/cs2user/cs2_app
 
 # Rendre l'application .NET exécutable
-RUN chmod +x /home/cs2user/cs2_app/WebApplication
+
+RUN chmod +x /home/cs2user/cs2_app/WebApplication1
 
 # Télécharger et installer SteamCMD
 RUN curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz
@@ -41,7 +51,6 @@ RUN curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | ta
 RUN mkdir -p /home/cs2user/cs2_server
 
 # Passer en tant qu'utilisateur non-root
-USER cs2user
 
 # Créer le script d'entrée
 COPY entrypoint.sh /home/cs2user/entrypoint.sh
@@ -49,6 +58,7 @@ RUN chmod +x /home/cs2user/entrypoint.sh
 
 # Exposer le port du serveur (par défaut 27015)
 EXPOSE 27015/udp
+EXPOSE 27015/tcp
 
 # Démarrer l'exécutable C# pour lancer le serveur CS2
-ENTRYPOINT ["/home/cs2user/entrypoint.sh"]
+CMD ["/home/cs2user/entrypoint.sh"]
