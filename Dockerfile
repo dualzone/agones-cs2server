@@ -29,7 +29,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         dotnet-sdk-8.0 \
         aspnetcore-runtime-8.0 \
-        dotnet-runtime-8.0
+        dotnet-runtime-8.0 \
+        dos2unix
 
 # Créer un utilisateur non-root pour exécuter le serveur
 RUN useradd -m cs2user
@@ -41,7 +42,6 @@ WORKDIR /home/cs2user
 COPY --from=build /out /home/cs2user/cs2_app
 
 # Rendre l'application .NET exécutable
-
 RUN chmod +x /home/cs2user/cs2_app/WebApplication1
 
 # Télécharger et installer SteamCMD
@@ -54,11 +54,13 @@ RUN mkdir -p /home/cs2user/cs2_server
 
 # Créer le script d'entrée
 COPY entrypoint.sh /home/cs2user/entrypoint.sh
+RUN chown -R cs2user:cs2user /home/cs2user
 RUN chmod +x /home/cs2user/entrypoint.sh
+RUN dos2unix /home/cs2user/entrypoint.sh
 
 # Exposer le port du serveur (par défaut 27015)
 EXPOSE 27015/udp
 EXPOSE 27015/tcp
 
 # Démarrer l'exécutable C# pour lancer le serveur CS2
-CMD ["/home/cs2user/entrypoint.sh"]
+CMD ["/bin/bash","/home/cs2user/entrypoint.sh"]

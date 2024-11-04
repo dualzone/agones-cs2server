@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "Démarrage de l'entrypoint"
 # Répertoire d'installation du serveur
 SERVER_DIR="/home/cs2user/cs2_server"
 
