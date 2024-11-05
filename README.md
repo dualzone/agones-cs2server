@@ -1,6 +1,6 @@
 # Docker
 
-Installation de [Docker](https://www.docker.com/) > v4.35.1
+Installation de [Docker](https://www.docker.com/) 
 
 Construction de l'image Docker
 
