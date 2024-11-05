@@ -1,4 +1,4 @@
-# Docker
+# DualZone
 
 Installation de [Docker](https://www.docker.com/) 
 
