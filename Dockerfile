@@ -31,9 +31,15 @@ RUN apt-get update && \
         aspnetcore-runtime-8.0 \
         dotnet-runtime-8.0 \
         dos2unix
+RUN apt-get update && apt-get install -y locales && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
 
 # Créer un utilisateur non-root pour exécuter le serveur
-RUN useradd -m cs2user
+RUN useradd -m cs2user && \
+    mkdir -p /root/Steam && \
+    chown -R cs2user:cs2user /root/Steam && \
+    chmod -R 755 /root/Steam
 
 # Définir le répertoire de travail pour SteamCMD et le serveur
 WORKDIR /home/cs2user
