@@ -47,18 +47,19 @@ class Program
 
     private static void StartCsgoServer()
     {
-        ProcessDirectory("E:\\DualZone\\cs2\\game\\bin\\win64");
+        string serverPath = "/home/cs2user/cs2_server";
+        ProcessDirectory(serverPath + "/game/bin/");
         var csgoProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = @"E:\DualZone\cs2\game\bin\win64\cs2.exe", // Assurez-vous que le chemin est correct
+                FileName = $"{serverPath}/game/bin/win64/cs2.exe", // Assurez-vous que le chemin est correct
                 Arguments = $"-dedicated -port '27015' -console -usercon +sv_setsteamaccount ECE2CDBA46245CD80E318A1449A8CBA4 +game_type 0 +game_mode 2 +map de_dust2 +sv_lan 0 +rcon_password '123456'",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory = @"E:\DualZone\cs2\game\bin\win64\"
+                WorkingDirectory = $"{serverPath}/game/bin/win64/"
             }
         };
 
@@ -69,6 +70,7 @@ class Program
         csgoProcess.BeginOutputReadLine();
         csgoProcess.BeginErrorReadLine();
     }
+
 
     private static async Task HealthCheckLoop()
     {
