@@ -26,7 +26,8 @@ RUN apt-get update && \
     wget \
     libc6-i386 \
     libtcmalloc-minimal4 \
-    dos2unix && \
+    dos2unix \
+    xz-utils && \
     localedef -i en_US -f UTF-8 en_US.UTF-8 && \
     rm -rf /var/lib/apt/lists/*
 
@@ -35,22 +36,19 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Installer .NET Runtime 8.0.0 nécessaire pour l'application
-RUN wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh && \
-    chmod +x dotnet-install.sh && \
-    ./dotnet-install.sh --channel 8.0 --runtime aspnetcore --install-dir /usr/share/dotnet && \
-    rm dotnet-install.sh
-
-# Ajouter /usr/share/dotnet à la variable PATH
-ENV PATH="${PATH}:/usr/share/dotnet"
-
-# Télécharger et installer SteamCMD dans /home/cs2user/Steam
+# Ajouter SteamCMD
 RUN mkdir -p /home/cs2user/Steam && \
-    curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam
-
-# Installer le runtime Steam
-RUN mkdir -p /home/cs2user/.steam/sdk32 && \
+    curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam && \
+    chmod +x /home/cs2user/Steam/steamcmd.sh && \
+    mkdir -p /home/cs2user/.steam/sdk32 && \
     ln -s /home/cs2user/Steam/linux32/steamclient.so /home/cs2user/.steam/sdk32/steamclient.so
+
+# Télécharger et installer le runtime Steam nécessaire (sniper runtime) en vérifiant l'URL
+RUN mkdir -p /home/cs2user/Steam/steamapps/common/SteamLinuxRuntime_sniper && \
+    cd /home/cs2user/Steam/steamapps/common/SteamLinuxRuntime_sniper && \
+    curl -O https://repo.steampowered.com/SteamLinuxRuntime_sniper.tar.xz && \
+    file SteamLinuxRuntime_sniper.tar.xz && \
+    tar -xJf SteamLinuxRuntime_sniper.tar.xz || echo "Extraction échouée. Vérifiez le fichier."
 
 # Créer un utilisateur non-root pour exécuter le serveur
 RUN useradd -m cs2user && \
@@ -70,11 +68,6 @@ COPY --from=build /out /home/cs2user/cs2_app
 
 # Rendre l'application .NET exécutable
 RUN chmod +x /home/cs2user/cs2_app/WebApplication1.dll
-
-# Copier et configurer SteamCMD
-RUN curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz && \
-    chmod +x /home/cs2user/Steam/steamcmd.sh && \
-    chmod -R +x /home/cs2user/Steam/linux32/steamcmd
 
 # Passer en tant qu’utilisateur root pour configurer entrypoint.sh
 USER root

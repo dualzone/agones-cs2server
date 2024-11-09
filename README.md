@@ -9,5 +9,5 @@ docker build -t cs2server .
 ````
 Lancement de l'image
 ````shell
-docker run -it cs2server
+docker run -it -v cs2_data:/home/cs2user cs2server
 ````
