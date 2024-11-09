@@ -48,18 +48,41 @@ class Program
     private static void StartCsgoServer()
     {
         string serverPath = "/home/cs2user/cs2_server";
-        ProcessDirectory(serverPath + "/game/bin/");
+        
+        // Première étape : Mettre à jour le serveur avec SteamCMD
+        var steamCmdProcess = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "/home/cs2user/Steam/steamcmd.sh",
+                Arguments = $"+login anonymous +force_install_dir {serverPath} +app_update 730 validate +quit",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            }
+        };
+        
+        steamCmdProcess.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
+        steamCmdProcess.ErrorDataReceived += (sender, e) => Console.WriteLine("Erreur SteamCMD : " + e.Data);
+
+        steamCmdProcess.Start();
+        steamCmdProcess.BeginOutputReadLine();
+        steamCmdProcess.BeginErrorReadLine();
+        steamCmdProcess.WaitForExit();
+
+        // Deuxième étape : Démarrer le serveur CS2 avec le script cs2.sh
         var csgoProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = $"{serverPath}/game/bin/win64/cs2.exe", // Assurez-vous que le chemin est correct
+                FileName = $"{serverPath}/game/cs2.sh", // Assurez-vous que le chemin est correct
                 Arguments = $"-dedicated -port '27015' -console -usercon +sv_setsteamaccount ECE2CDBA46245CD80E318A1449A8CBA4 +game_type 0 +game_mode 2 +map de_dust2 +sv_lan 0 +rcon_password '123456'",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory = $"{serverPath}/game/bin/win64/"
+                WorkingDirectory = $"{serverPath}/game/bin/linuxsteamrt64/"
             }
         };
 
@@ -70,7 +93,6 @@ class Program
         csgoProcess.BeginOutputReadLine();
         csgoProcess.BeginErrorReadLine();
     }
-
 
     private static async Task HealthCheckLoop()
     {

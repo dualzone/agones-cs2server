@@ -48,14 +48,16 @@ ENV PATH="${PATH}:/usr/share/dotnet"
 RUN mkdir -p /home/cs2user/Steam && \
     curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam
 
+# Installer le runtime Steam
+RUN mkdir -p /home/cs2user/.steam/sdk32 && \
+    ln -s /home/cs2user/Steam/linux32/steamclient.so /home/cs2user/.steam/sdk32/steamclient.so
+
 # Créer un utilisateur non-root pour exécuter le serveur
 RUN useradd -m cs2user && \
     mkdir -p /root/Steam && \
     mkdir -p /home/cs2user/Steam && \
     mkdir -p /home/cs2user/cs2_server && \
-    chown -R cs2user:cs2user /root/Steam && \
-    chown -R cs2user:cs2user /home/cs2user/cs2_server && \
-    chown -R cs2user:cs2user /home/cs2user/Steam && \
+    chown -R cs2user:cs2user /root/Steam /home/cs2user/Steam /home/cs2user/cs2_server && \
     chmod -R 740 /home/cs2user/Steam && \
     chmod -R 770 /home/cs2user/cs2_server && \
     chmod -R 770 /root/Steam
