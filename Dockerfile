@@ -1,5 +1,5 @@
 # Étape 1 : Compiler le projet C# (build stage)
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
 WORKDIR /app
 
 # Copier le code source C# dans le conteneur
@@ -9,7 +9,7 @@ COPY WebApplication1/ ./src/
 RUN dotnet publish ./src -c Release -o /out
 
 # Étape 2 : Créer l'image de base et configurer l'environnement
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS base
 
 # Installer les dépendances et configurer les locales
 RUN apt-get update && \
@@ -24,9 +24,10 @@ RUN apt-get update && \
     lib32stdc++6 \
     libc6-dev \
     wget \
+    dnsutils \
     libc6-i386 \
     libtcmalloc-minimal4 \
-    dos2unix \
+    dos2unix  \
     xz-utils && \
     localedef -i en_US -f UTF-8 en_US.UTF-8 && \
     rm -rf /var/lib/apt/lists/*
@@ -36,12 +37,15 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+
+
+
 # Ajouter SteamCMD
 RUN mkdir -p /home/cs2user/Steam && \
     curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam && \
     chmod +x /home/cs2user/Steam/steamcmd.sh && \
-    mkdir -p /home/cs2user/.steam/sdk32 && \
-    ln -s /home/cs2user/Steam/linux32/steamclient.so /home/cs2user/.steam/sdk32/steamclient.so
+    mkdir -p /home/cs2user/.steam/sdk64 && \
+    ln -s /home/cs2user/Steam/linux64/steamclient.so /home/cs2user/.steam/sdk64/steamclient.so
 
 # Télécharger et installer le runtime Steam nécessaire (sniper runtime) en vérifiant l'URL
 RUN mkdir -p /home/cs2user/Steam/steamapps/common/SteamLinuxRuntime_sniper && \
