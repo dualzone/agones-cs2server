@@ -9,12 +9,28 @@ echo "Téléchargement et mise à jour du serveur CS2 avec SteamCMD..."
 
 
 # Vérifier que le fichier cs2.sh existe avant de lancer
-if [ -f /home/cs2user/cs2_server/game/bin/linuxsteamrt64/cs2 ]; then
-    echo "Le script cs2.sh est trouvé, démarrage du serveur..."
-else
+if ! [[ -f /home/cs2user/cs2_server/game/bin/linuxsteamrt64/cs2 ]]; then
     echo "Erreur : le fichier cs2.sh n'a pas été trouvé dans le répertoire du serveur."
     exit 1
 fi
 
-dotnet /home/cs2user/cs2_app/WebApplication1.dll
+
+#!/bin/bash
+echo "Variables d'environnement :"
+env
+
+echo "Chemin d'accès :"
+echo $PATH
+
+echo "Contenu du répertoire de l'application :"
+ls -l /home/cs2user/cs2_app
+
+echo "Contenu du répertoire du serveur CS2 :"
+ls -l /home/cs2user/cs2_server/game/bin/linuxsteamrt64
+
+wait
+
+sleep 5
+
+dotnet /home/cs2user/cs2_app/WebApplication1.dll || exit 1
 

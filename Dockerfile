@@ -23,7 +23,7 @@ RUN apt-get update && \
     unzip \
     wget \
     net-tools &&\
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Définir les variables d'environnement pour les locales
 
