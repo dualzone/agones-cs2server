@@ -1,0 +1,32 @@
+
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+
+**/.idea
+
+# Visual Studio Code
+.vscode
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+WebApplication1/[Dd]ebug/
+WebApplication1/[Dd]ebugPublic/
+WebApplication1/[Rr]elease/
+WebApplication1/[Rr]eleases/
+x64/
+x86/
+WebApplication1/build/
+WebApplication1/bld/
+WebApplication1/[Bb]in/
+WebApplication1/[Oo]bj/
+WebApplication1/msbuild.log
+WebApplication1/msbuild.err
+WebApplication1/msbuild.wrn

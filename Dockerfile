@@ -19,11 +19,20 @@ RUN apt-get update && \
     locales \
     locales-all \
     lib32gcc-s1 \
+    net-tools \
     curl \
     unzip \
     wget \
-    net-tools &&\
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    dnsutils \
+    dos2unix  \
+    xz-utils && \
+    localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Définir les variables d'environnement pour les locales
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 # Définir les variables d'environnement pour les locales
 
@@ -32,7 +41,6 @@ RUN mkdir -p /home/cs2user/Steam && \
     curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam && \
     chmod +x /home/cs2user/Steam/steamcmd.sh && \
     mkdir -p /home/cs2user/.steam/sdk64 && \
-    ln -s /home/cs2user/Steam/linux64/steamclient.so /home/cs2user/.steam/sdk64/steamclient.so
 
 
 # Télécharger et installer le runtime Steam nécessaire (sniper runtime) en vérifiant l'URL
@@ -60,7 +68,8 @@ RUN chown -R cs2user:cs2user /root/Steam /home/cs2user /home/cs2user/.steam /hom
     chmod -R 740 /home/cs2user && \
     chmod +x /home/cs2user/cs2_app/WebApplication1.dll && \
     chmod +x /home/cs2user/entrypoint.sh && \
-    chown cs2user:cs2user /home/cs2user/entrypoint.sh
+    chown cs2user:cs2user /home/cs2user/entrypoint.sh && \
+    dos2unix /home/cs2user/entrypoint.sh
 
 # Repasser à l’utilisateur non-root pour exécuter SteamCMD et le serveur
 USER cs2user
