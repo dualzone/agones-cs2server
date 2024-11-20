@@ -23,7 +23,7 @@ public class CS2Server: CS2ServerInterface
         int gameMode = 2,
         string map = "dust2",
         int serverPort = 27015,
-        string launcherPath = "/home/cs2user/cs2_server/game/bin/linuxsteamrt64/"
+        string launcherPath = "/cs2server/game/bin/linuxsteamrt64/"
         ) 
     {
         this.steamToken = steamToken;
@@ -32,7 +32,10 @@ public class CS2Server: CS2ServerInterface
         this.gameMode = gameMode;
         this.map = map;
         this.serverPort = serverPort;
-        this.launcherPath = launcherPath;
+
+        var home = Environment.GetEnvironmentVariable("HOMEDIR")
+                                  ?? throw new InvalidOperationException("La variable d'environnement HOMEDIR est introuvable.");
+        this.launcherPath = $"{home}{launcherPath}";
         
         this.CongigureProcess();
     }
