@@ -6,75 +6,87 @@ WORKDIR /app
 COPY WebApplication1/ ./src/
 
 # Compiler l'application C#
-RUN dotnet publish ./src -c Release -o /out
+RUN dotnet publish ./src -c Release -o /out --self-contained -r linux-x64
 
 # Étape 2 : Créer l'image de base et configurer l'environnement
 
-FROM cm2network/steamcmd:root-bookworm as build_stage
+FROM steamcmd/steamcmd:ubuntu-22 as cppdeps
+
+ENV USER root
+ENV HOME /root/installer
+
+# Set working directory
+WORKDIR $HOME
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl tar
+
+# Donload and unpack installer
+RUN curl http://media.steampowered.com/installer/steamcmd_linux.tar.gz \
+    --output steamcmd.tar.gz --silent
+RUN tar -xvzf steamcmd.tar.gz && rm steamcmd.tar.gz
+
+FROM alpine:latest as build_stage
+
+CMD ["bash"]
+
+ARG PUID=1000
+ENV USER=steam \
+    HOMEDIR=/home/steam \
+    STEAMCMDDIR=/home/steam/steamcmd
 
 # Installer les dépendances et configurer les locales
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apk update && \
+    apk add --no-interactive --upgrade \
     ca-certificates \
-    locales \
-    locales-all \
     net-tools \
     wget \
-    lib32z1 \
-    libicu-dev \
     unzip \
+    bash \
+    curl \
     jq \
-    dnsutils \
+    aspnetcore8-runtime  \
+    dotnet8-runtime \
     dos2unix  &&\
-    localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-    apt-get clean &&\
-    find /var/lib/apt/lists/ -type f -delete
+    apk cache clean && \
+    adduser -u "${PUID}" -D "${USER}" && \
+    rm -rf /var/cache/apk/*
+    #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    #dpkg-reconfigure --frontend=noninteractive locales
 
 # Définir les variables d'environnement pour les locales
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb && \
-    apt-get update && \
-    apt-get install -y  --no-install-recommends \
-    aspnetcore-runtime-9.0 \
-    dotnet-runtime-9.0
-
 
 FROM build_stage AS dualzone-cs2server
 
-# Créer un utilisateur non-root pour exécuter le serveur
-RUN  set -x && \
-    mkdir -p /root/Steam && \
-    mkdir -p "${HOMEDIR}/cs2server" && \
-    chown -R "${USER}:${USER}" "${HOMEDIR}" && \
-    chmod -R 770 "${HOMEDIR}/cs2server"
-
 # Définir le répertoire de travail pour SteamCMD et le serveur
 WORKDIR "${HOMEDIR}"
-# Copier l'exécutable C# depuis l'étape de compilation
+
+COPY --from=cppdeps /etc/ssl/certs /etc/ssl/certs
+COPY --from=cppdeps /lib/i386-linux-gnu /lib/
+COPY --from=cppdeps "/root/installer/linux32/libstdc++.so.6" /lib/
+
 COPY --from=build /out "${HOMEDIR}/cs2app"
-
-# Rendre l'application .NET exécutable
-RUN chmod +x "${HOMEDIR}/cs2app/WebApplication1.dll"
-
-# Passer en tant qu’utilisateur root pour configurer entrypoint.sh
-USER root
-
-# Copier le script d'entrée et définir les permissions
 COPY entrypoint.sh "${HOMEDIR}/entrypoint.sh"
-RUN chmod +x "${HOMEDIR}/entrypoint.sh" && \
+
+
+RUN  set -x && \
+    mkdir -p /root/Steam && \
+    mkdir -p "${HOMEDIR}/cs2server" "${HOMEDIR}/.steam/sdk64" "${HOMEDIR}/.steam/sdk32" "${STEAMCMDDIR}/linux32" "${STEAMCMDDIR}/linux64" && \
+    chown -R "${USER}:${USER}" "${HOMEDIR}" "${STEAMCMDDIR}" && \
+    chmod -R 770 "${HOMEDIR}" "${STEAMCMDDIR}" && \
+    chmod +x "${HOMEDIR}/cs2app/WebApplication1.dll" "${HOMEDIR}/entrypoint.sh" && \
     dos2unix "${HOMEDIR}/entrypoint.sh"
 
 # Repasser à l’utilisateur non-root pour exécuter SteamCMD et le serveur
-USER "${USER}"
+USER steam
 
 # Exposer le port du serveur (par défaut 27015)
 EXPOSE 27015/udp
 EXPOSE 27015/tcp
 
 # Démarrer le serveur CS2 via le script d'entrée
-CMD ["./entrypoint.sh"]
+CMD ["sh","./entrypoint.sh"]
