@@ -6,7 +6,7 @@ WORKDIR /app
 COPY WebApplication1/ ./src/
 
 # Compiler l'application C#
-RUN dotnet publish ./src -c Release -o /out --self-contained -r linux-x64
+RUN dotnet publish ./src -c Release -o /out #--self-contained -r linux-x64
 
 # Étape 2 : Créer l'image de base et configurer l'environnement
 
@@ -42,17 +42,26 @@ RUN apk update && \
     net-tools \
     wget \
     unzip \
+    libgcc \
+    libstdc++ \
+    libcurl \
+    zlib \
     bash \
     curl \
     jq \
-    aspnetcore8-runtime  \
-    dotnet8-runtime \
     dos2unix  &&\
-    apk cache clean && \
+    apk add --no-interactive libgdiplus aspnetcore8-runtime dotnet8-runtime && \
     adduser -u "${PUID}" -D "${USER}" && \
-    rm -rf /var/cache/apk/*
-    #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    #dpkg-reconfigure --frontend=noninteractive locales
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk && \
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk && \
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-i18n-2.35-r0.apk && \
+    rm -f /etc/nsswitch.conf /lib/ld-linux-x86-64.so.2 && \
+    apk add --no-cache --force-overwrite ./glibc-i18n-2.35-r0.apk ./glibc-2.35-r0.apk ./glibc-bin-2.35-r0.apk && \
+    /usr/glibc-compat/bin/localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+    rm -f ./glibc-2.35-r0.apk ./glibc-bin-2.35-r0.apk ./glibc-i18n-2.35-r0.apk && \
+    rm -rf /var/cache/apk/* && \
+    apk cache clean
 
 # Définir les variables d'environnement pour les locales
 ENV LANG=en_US.UTF-8 \
