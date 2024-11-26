@@ -17,16 +17,4 @@ project.lock.json
 *.sln.docstates
 
 # Build results
-WebApplication1/[Dd]ebug/
-WebApplication1/[Dd]ebugPublic/
-WebApplication1/[Rr]elease/
-WebApplication1/[Rr]eleases/
-x64/
-x86/
-WebApplication1/build/
-WebApplication1/bld/
-WebApplication1/[Bb]in/
-WebApplication1/[Oo]bj/
-WebApplication1/msbuild.log
-WebApplication1/msbuild.err
-WebApplication1/msbuild.wrn
+**/node_modules
