@@ -1,83 +1,59 @@
-# Étape 1 : Compiler le projet C# (build stage)
-FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
-WORKDIR /app
-VOLUME /home/cs2user/cs2_server
+FROM node:current-bookworm-slim as build_stage
 
-# Copier le code source C# dans le conteneur
-COPY WebApplication1/ ./src/
 
-# Compiler l'application C#
-RUN dotnet publish ./src -c Release -o /out
-
-# Étape 2 : Créer l'image de base et configurer l'environnement
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS base
+ARG PUID=1100
+ENV USER=steam \
+    HOMEDIR=/home/steam \
+    STEAMCMDDIR=/home/steam/steamcmd
 
 # Installer les dépendances et configurer les locales
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apt-get install -y \
     ca-certificates \
+    net-tools \
+    wget \
+    unzip \
+    lib32stdc++6  \
+    lib32gcc-s1 \
+    jq \
     locales \
     locales-all \
-    lib32gcc-s1 \
-    net-tools \
-    curl \
-    unzip \
-    wget \
-    dnsutils \
-    dos2unix  \
-    xz-utils && \
+    curl &&\
+    useradd -u "${PUID}" -m "${USER}" && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt clean && \
     localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-    rm -rf /var/lib/apt/lists/*
+    echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
+    echo "LC_ALL=en_US.UTF-8" >> /etc/environment
 
 # Définir les variables d'environnement pour les locales
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Définir les variables d'environnement pour les locales
 
-# Ajouter SteamCMD
-RUN mkdir -p /home/cs2user/Steam && \
-    curl -sSL http://media.steampowered.com/installer/steamcmd_linux.tar.gz | tar -xz -C /home/cs2user/Steam && \
-    chmod +x /home/cs2user/Steam/steamcmd.sh && \
-    mkdir -p /home/cs2user/.steam/sdk64 && \
-
-
-# Télécharger et installer le runtime Steam nécessaire (sniper runtime) en vérifiant l'URL
-RUN mkdir -p /home/cs2user/Steam/steamapps/common/SteamLinuxRuntime_sniper && \
-    cd /home/cs2user/Steam/steamapps/common/SteamLinuxRuntime_sniper && \
-    curl -O https://repo.steampowered.com/SteamLinuxRuntime_sniper.tar.xz && \
-    file SteamLinuxRuntime_sniper.tar.xz && \
-    tar -xJf SteamLinuxRuntime_sniper.tar.xz || echo "Extraction échouée. Vérifiez le fichier."
-
-# Créer un utilisateur non-root pour exécuter le serveur
-RUN useradd -m cs2user && \
-    mkdir -p /root/Steam && \
-    mkdir -p /home/cs2user/Steam && \
-    mkdir -p /home/cs2user/cs2_server
+FROM build_stage AS dualzone-cs2server
 
 # Définir le répertoire de travail pour SteamCMD et le serveur
-WORKDIR /home/cs2user
+WORKDIR "${HOMEDIR}"
 
-USER root
-# Copier l'exécutable C# depuis l'étape de compilation
-COPY --from=build /out /home/cs2user/cs2_app
-COPY entrypoint.sh /home/cs2user/entrypoint.sh
+COPY ./ServerManager "${HOMEDIR}/ServerManager"
+COPY entrypoint.sh "${HOMEDIR}/entrypoint.sh"
 
-RUN chown -R cs2user:cs2user /root/Steam /home/cs2user /home/cs2user/.steam /home/cs2user/cs2_app  && \
-    chmod -R 740 /home/cs2user && \
-    chmod +x /home/cs2user/cs2_app/WebApplication1.dll && \
-    chmod +x /home/cs2user/entrypoint.sh && \
-    chown cs2user:cs2user /home/cs2user/entrypoint.sh && \
-    dos2unix /home/cs2user/entrypoint.sh
+
+RUN  set -x && \
+    mkdir -p /root/Steam && \
+    mkdir -p "${HOMEDIR}/cs2server" "${HOMEDIR}/.steam/sdk64" "${HOMEDIR}/.steam/sdk32" "${STEAMCMDDIR}/linux32" "${STEAMCMDDIR}/linux64" && \
+    chown -R "${USER}:${USER}" "${HOMEDIR}" "${STEAMCMDDIR}" "/usr/lib/x86_64-linux-gnu" && \
+    chmod -R 770 "${HOMEDIR}" "${STEAMCMDDIR}" "/usr/lib/x86_64-linux-gnu" && \
+    chmod +x "${HOMEDIR}/entrypoint.sh"
 
 # Repasser à l’utilisateur non-root pour exécuter SteamCMD et le serveur
-USER cs2user
+USER steam
 
 # Exposer le port du serveur (par défaut 27015)
 EXPOSE 27015/udp
 EXPOSE 27015/tcp
 
-
 # Démarrer le serveur CS2 via le script d'entrée
-CMD ["/home/cs2user/entrypoint.sh"]
+CMD ["sh","./entrypoint.sh"]

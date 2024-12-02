@@ -1,0 +1,9 @@
+{
+  "name": "dualzone-agones-cs2-serverManager",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/agones-sdk": "^1.45.0"
+  }
+}
