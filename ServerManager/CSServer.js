@@ -1,5 +1,5 @@
 import path from 'path';
-import spawn from 'child_process';
+import { spawn } from 'child_process';
 
 export default class CS2Server {
     constructor(steamToken, rconPassword, gameType = 0, gameMode = 2, map = 'de_dust2', serverPort = 27015, launcherPath = '/cs2server/game/bin/linuxsteamrt64/') {
@@ -47,12 +47,6 @@ export default class CS2Server {
         this.cs2ServerProcess.on('exit', () => {
             console.log('Le processus CS2 s\'est terminé.');
         });
-    }
-
-    startServer() {
-        console.log('Démarrage du serveur CS2...');
-        this.cs2ServerProcess.start();
-        console.log('Le serveur CS2 est en cours d\'exécution...');
     }
 
     stopServer() {

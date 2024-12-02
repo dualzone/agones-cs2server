@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
+
 echo "Installation du steam CMD"
+
 
 curl -fsSL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar xvzf - -C "${STEAMCMDDIR}"
 chmod +x "${STEAMCMDDIR}/steamcmd.sh"
@@ -25,12 +27,7 @@ bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${HOMEDIR}/cs2server" +log
 
 wait
 
-if ! [[ -f "${HOMEDIR}/cs2server/game/bin/linuxsteamrt64/cs2" ]]; then
-   echo "Erreur : le fichier cs2 n'a pas été trouvé dans le répertoire du serveur."
-   exit 1
-fi
-
-echo "Install js deps"
+echo "Installation des dépendances JS"
 cd "${HOMEDIR}/ServerManager"
 npm install
 

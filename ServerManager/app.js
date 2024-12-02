@@ -16,11 +16,12 @@ async function main() {
     // Launch the CS2 server
     const server = new CS2Server(steamToken, rconPassword);
 
-    server.startServer();
     await agonesSdk.ready();
 
+
+    healthCheckLoop();
+
     await server.waitForServerExit();
-    await healthCheckLoop();
 
     // Inform Agones that the server is shutting down
     await agonesSdk.shutdown();
