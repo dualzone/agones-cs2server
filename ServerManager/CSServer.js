@@ -1,8 +1,10 @@
 import path from 'path';
 import { spawn } from 'child_process';
+import {createClient} from "redis";
+import ConsoleLogger, {tags} from "./Logger/ConsoleLogger.js";
 
 export default class CS2Server {
-    constructor(steamToken, rconPassword, gameType = 0, gameMode = 2, map = 'de_dust2', serverPort = 27015, launcherPath = '/cs2server/game/bin/linuxsteamrt64/') {
+    constructor(steamToken, rconPassword, gameType = 0, gameMode = 2, map = 'de_dust2', serverPort = 27015, launcherPath = '/cs2-server/game/bin/win64/') {
         this.steamToken = steamToken;
         this.rconPassword = rconPassword;
         this.gameType = gameType;
@@ -10,12 +12,32 @@ export default class CS2Server {
         this.map = map;
         this.serverPort = serverPort;
 
-        const homeDir = process.env.HOMEDIR;
-        if (!homeDir) throw new Error('La variable d\'environnement HOMEDIR est introuvable.');
+        const homeDir = process.env.HOME_DIR;
         this.launcherPath = path.join(homeDir, launcherPath);
 
+        this.redis = null
+
+        this.createRedisClient().catch((err) => console.error(err))
         this.configureProcess();
     }
+
+    async createRedisClient() {
+        this.redis = await createClient()
+            .on('error', (err) => ConsoleLogger.error(tags.SYSTEM, err))
+            .on('connect', () => ConsoleLogger.info(tags.SYSTEM, 'Connecté à Redis'))
+            .connect()
+    }
+
+    async disconnectRedis() {
+        if(this.redis) {
+            await this.redis.disconnect()
+            ConsoleLogger.info(tags.SYSTEM, 'Déconnecté de Redis')
+        }else {
+            ConsoleLogger.warn(tags.SYSTEM, 'Redis n\'est pas connecté')
+        }
+    }
+
+
 
     configureProcess() {
         const args = [
@@ -31,47 +53,41 @@ export default class CS2Server {
             `+rcon_password '${this.rconPassword}'`
         ];
 
-        this.cs2ServerProcess = spawn(path.join(this.launcherPath, 'cs2'), args, {
+        this.cs2ServerProcess = spawn(path.join(this.launcherPath, 'cs2.exe'), args, {
             cwd: this.launcherPath,
             stdio: ['pipe', 'pipe', 'pipe']  // Use pipes for stdin, stdout, stderr
         });
 
         this.cs2ServerProcess.stdout.on('data', (data) => {
-            console.log(`[CS2]: ${data.toString()}`);
+            if (data.toString().includes('CTextConsoleWin::GetLine')) return;
+            ConsoleLogger.info('CS2', data.toString());
         });
 
         this.cs2ServerProcess.stderr.on('data', (data) => {
-            console.error(`[Erreur CS2]: ${data.toString()}`);
+            ConsoleLogger.error('CS2', data.toString());
         });
 
         this.cs2ServerProcess.on('exit', () => {
-            console.log('Le processus CS2 s\'est terminé.');
+            this.disconnectRedis().catch((err) => console.error(err))
+            ConsoleLogger.info(tags.SYSTEM, 'Le processus CS2 s\'est terminé.');
         });
+
     }
 
-    stopServer() {
-        if (!this.cs2ServerProcess.killed) {
-            console.log('Arrêt du serveur CS2...');
-            this.cs2ServerProcess.kill();
-            console.log('Serveur CS2 arrêté.');
-        } else {
-            console.log('Le serveur CS2 n\'est pas en cours d\'exécution.');
-        }
-    }
 
     sendCommand(command) {
         if (!this.cs2ServerProcess.killed) {
             this.cs2ServerProcess.stdin.write(command + '\n');
-            console.log(`Commande envoyée : ${command}`);
+            ConsoleLogger.info(tags.SYSTEM, `Commande envoyée au serveur CS2 : ${command}`);
         } else {
-            console.log('Le processus CS2 n\'est pas en cours d\'exécution.');
+            ConsoleLogger.warn(tags.SYSTEM, 'Le processus CS2 n\'est pas en cours d\'exécution.');
         }
     }
 
     waitForServerExit() {
-        console.log('En attente de la fin du processus CS2...');
+        ConsoleLogger.info(tags.SYSTEM, 'En attente de la fin du processus CS2...');
         this.cs2ServerProcess.on('exit', () => {
-            console.log('Le processus CS2 s\'est terminé.');
+            ConsoleLogger.info(tags.SYSTEM, 'Le processus CS2 s\'est terminé.');
         });
     }
 }

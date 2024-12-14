@@ -18,3 +18,4 @@ project.lock.json
 
 # Build results
 **/node_modules
+*.env

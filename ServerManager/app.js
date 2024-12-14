@@ -1,23 +1,37 @@
 import AgonesSDK from "@google-cloud/agones-sdk";// Assuming there is an Agones SDK for Node.js
 import CS2Server from './CSServer.js';
+import ConsoleLogger from "./Logger/ConsoleLogger.js";
+import EnvNotFoudException from "./Exceptions/EnvNotFoudException.js";
+import fs from 'fs';
+import dotenv from 'dotenv';
 
 async function main() {
     const agonesSdk = new AgonesSDK();
 
-    // Ensure the Agones SDK is ready to handle the server
-    await agonesSdk.connect();
+    // Load from .env if exists
+    if (fs.existsSync('.env')) {
+        dotenv.config();
+        ConsoleLogger.info('SYSTEM', 'Loaded .env file');
+    }
+
+    checkEnv();
 
     const steamToken = process.env.CS2_STEAM_TOKEN;
-    if (!steamToken) throw new Error('La variable d\'environnement CS2_STEAM_TOKEN est introuvable.');
 
     const rconPassword = process.env.CS2_RCON_PASSWORD;
-    if (!rconPassword) throw new Error('La variable d\'environnement CS2_RCON_PASSWORD est introuvable.');
+
+    const serverUuid = process.env.SERVER_UUID;
+
+    ConsoleLogger.info('SYSTEM', 'Try to connect to Agones');
+
+    await agonesSdk.connect();
+
+    ConsoleLogger.info('SYSTEM', 'Connected to Agones');
 
     // Launch the CS2 server
     const server = new CS2Server(steamToken, rconPassword);
 
     await agonesSdk.ready();
-
 
     healthCheckLoop();
 
@@ -31,9 +45,27 @@ async function healthCheckLoop() {
     const agonesSdk = new AgonesSDK();
     while (true) {
         await agonesSdk.health();
-        console.log('[HEALTH] send health ping');
+        ConsoleLogger.info('HEALTH', 'Health check sent');
         await new Promise(resolve => setTimeout(resolve, 10000)); // Send health ping every 10 seconds
     }
 }
 
-main().catch(err => console.error(err));
+function checkEnv() {
+    const envs = [
+        'CS2_STEAM_TOKEN',
+        'CS2_RCON_PASSWORD',
+        'SERVER_UUID',
+        'REDIS_PASSWORD',
+        'REDIS_HOST',
+        'REDIS_PORT',
+        'HOME_DIR'
+    ];
+
+    for (const env of envs) {
+        if (!process.env[env]) {
+            throw new EnvNotFoudException(env);
+        }
+    }
+}
+
+main().catch(err => ConsoleLogger.error('SYSTEM', err.message));
