@@ -20,8 +20,6 @@ async function main() {
 
     const rconPassword = process.env.CS2_RCON_PASSWORD;
 
-    const serverUuid = process.env.SERVER_UUID;
-
     ConsoleLogger.info('SYSTEM', 'Try to connect to Agones');
 
     await agonesSdk.connect();
@@ -29,11 +27,12 @@ async function main() {
     ConsoleLogger.info('SYSTEM', 'Connected to Agones');
 
     // Launch the CS2 server
-    const server = new CS2Server(steamToken, rconPassword);
-
-    await agonesSdk.ready();
+    const server = new CS2Server(steamToken, rconPassword, agonesSdk);
 
     healthCheckLoop();
+
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(35000);
 
     await server.waitForServerExit();
 
@@ -54,7 +53,6 @@ function checkEnv() {
     const envs = [
         'CS2_STEAM_TOKEN',
         'CS2_RCON_PASSWORD',
-        'SERVER_UUID',
         'REDIS_PASSWORD',
         'REDIS_HOST',
         'REDIS_PORT',

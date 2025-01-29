@@ -48,6 +48,10 @@ const levels = {
 
 export default class ConsoleLogger {
 
+    static test(){
+        console.log("test")
+    }
+
     static getTime() {
         const date = new Date();
         return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
@@ -58,6 +62,10 @@ export default class ConsoleLogger {
     }
 
     static info(tag, message) {
+        if (tag.startsWith("[")){
+            tag = tag.replace("[", "").replace("]", "");
+        }
+
         switch (tag){
             case "CS2":
                 console.log(`${colors.MAGENTA}${this.getTime()} ${tags[tag]} ${levels.INFO} : ${message}${format.RESET}`);
