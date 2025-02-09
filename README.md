@@ -8,6 +8,20 @@ Construction de l'image Docker
 docker build -t cs2server .
 ````
 
+Set les variables sous windows: 
+```powershell
+
+$env:CS2_STEAM_TOKEN="ECE2CDBA46245CD80E318A1449A8CBA4"
+$env:CS2_RCON_PASSWORD="YOUR_RCON"
+$env:REDIS_PASSWORD="dualzone"
+$env:REDIS_HOST="127.0.0.1"
+$env:REDIS_PORT="6379"
+$env:HOME_DIR="D:\dualzone"
+
+
+
+```
+
 *Les deux images suivantes doivent être lancées en même temps*
 
 Lancement de l'image

@@ -1,4 +1,4 @@
-FROM node:current-bookworm-slim as build_stage
+FROM python:3.13-slim-bookworm as build_stage
 
 
 ARG PUID=1100
@@ -37,7 +37,7 @@ FROM build_stage AS dualzone-cs2server
 # Définir le répertoire de travail pour SteamCMD et le serveur
 WORKDIR "${HOMEDIR}"
 
-COPY ./ServerManager "${HOMEDIR}/ServerManager"
+COPY ./Manager "${HOMEDIR}/Manager"
 COPY entrypoint.sh "${HOMEDIR}/entrypoint.sh"
 
 

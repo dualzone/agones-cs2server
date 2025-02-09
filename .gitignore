@@ -11,10 +11,11 @@ project.lock.json
 .vscode
 
 # User-specific files
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
+**/__pycache__/
+**/.pytest_cache/
+*.egg-info/
+Agones_dualzone_CS2_manager.egg-info/
+.venv
 
 # Build results
 **/node_modules
