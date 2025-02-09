@@ -8,30 +8,16 @@ Construction de l'image Docker
 docker build -t cs2server .
 ````
 
-Set les variables sous windows: 
-```powershell
-
-$env:CS2_STEAM_TOKEN="ECE2CDBA46245CD80E318A1449A8CBA4"
-$env:CS2_RCON_PASSWORD="YOUR_RCON"
-$env:REDIS_PASSWORD="dualzone"
-$env:REDIS_HOST="127.0.0.1"
-$env:REDIS_PORT="6379"
-$env:HOME_DIR="D:\dualzone"
-
-
-
-```
-
-*Les deux images suivantes doivent être lancées en même temps*
-
-Lancement de l'image
+Run l'environnement
 ````shell
-docker run -it -v cs2_data:/home/steam/cs2server --network=host --rm -p 27015/udp -p 27015/udp -e CS2_STEAM_TOKEN=ECE2CDBA46245CD80E318A1449A8CBA4 -e CS2_RCON_PASSWORD=123456 cs2server
-````
-Lancement du conteneur de dev agones
-
-````shell
-docker run --network=host --rm us-docker.pkg.dev/agones-images/release/agones-sdk:1.45.0 --local
+docker network create local-dev
+docker run -p 9357:9357 -p 9358:9358 -p 8080:8080 --rm --name agones --network local-dev -v $(pwd)\gameserver.yaml:/tmp/gameserver.yaml us-docker.pkg.dev/agones-images/release/agones-sdk:1.46.0 --local --address 0.0.0.0 -f /tmp/gameserver.yaml
+docker run -it -v cs2_data:/home/steam/cs2server -p 27015:27015/tcp -p 27015:27015/udp --name cs2server --network local-dev --rm --env-file=.env cs2server
 ````
 
 
+
+TODO:
+- Installation propre de GT5, sourcemod et metamod
+- Configuration des events
+- Pool des event gt5

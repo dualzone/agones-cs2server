@@ -8,7 +8,6 @@ class AgonesManager:
 
     def send_health_check(self) -> None:
         response = requests.post(self.__url + "/health", headers=self.__headers, json={})
-        print(response)
         if response.status_code == 200:
             return
         else:

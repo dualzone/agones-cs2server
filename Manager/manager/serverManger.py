@@ -4,6 +4,7 @@ import subprocess
 from platform import system
 from threading import Thread
 
+from utils.definitions.serverConfig import Game
 from utils.envManager import EnvManager
 from utils.redis.redisClient import RedisClient
 from manager.managerHelper import ManagerHelper
@@ -15,26 +16,30 @@ class ServerManager:
         self.__rcon_password = rcon_password
         self.__server_port = server_port
         self.__redis_client: RedisClient = RedisClient()
-        self.__server_id = str(uuid.uuid4())
+        self.__server_id = "3336752b-4d6e-4668-a39a-a963019a0c57" #str(uuid.uuid4())
         self.__helper: MangerHelper = ManagerHelper(self.__server_id)
         self.__allocator_thread: Thread = self.__redis_client.listen_for_events('gameserver:allocate', self.__redis_event_handler)
-
-        home_dir = EnvManager.get_env_var("HOME_DIR")
+        self.__command_thread: Thread = self.__redis_client.listen_for_events('gameserver:command', self.__listen_to_commands)
+        home_dir = EnvManager.get_env_var("HOMEDIR")
         bin_dir = 'linuxsteamrt64' if  system() == "Linux" else "win64"
         self.__launcher_path = Path(home_dir).expanduser() / "cs2server/game/bin" / bin_dir
-
         self.__configure_process()
         self.__helper.set_server_ready()
         self.__allocator_thread.start()
+        self.__command_thread.start()
 
     def __configure_process(self):
         args = [
             '-dedicated',
-            '-port', str(self.__server_port),
+            f'-port 27015',
             '-console',
+            f'+sv_setsteamaccount  {self.__steam_token}',
             '-usercon',
-            '+sv_lan 1',
-            f'+rcon_password {self.__rcon_password}'
+            '+sv_lan 0',
+            f'+rcon_password {self.__rcon_password}',
+            '+game_type 2',
+            '+game_mode 0',
+            '+map de_dust2'
         ]
 
         print(self.__launcher_path)
@@ -42,7 +47,7 @@ class ServerManager:
         launch_path = self.__launcher_path / ('cs2' + launcher_ext)
         print(launch_path)
         self.__cs2_server_process = subprocess.Popen(
-            [str(self.__launcher_path / ('cs2' + launcher_ext) )] + args,
+            [str(launch_path)] + args,
             cwd=str(self.__launcher_path),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -56,8 +61,7 @@ class ServerManager:
         def read_stream(stream, prefix):
             for line in iter(stream.readline, ''):
                 if 'CTextConsoleWin::GetLine: !GetNumberOfConsoleInputEvents' in line: continue
-                pass
-                #print(f'[{prefix}]: {line.strip()}')
+                print(f'[{prefix}]: {line.strip()}')
 
         import threading
         threading.Thread(target=read_stream, args=(self.__cs2_server_process.stdout, 'CS2'), daemon=True).start()
@@ -94,4 +98,9 @@ class ServerManager:
     def __redis_event_handler(self, message):
         print(f"Received message: {message}")
         if message == self.__server_id:
-            self.__helper.set_server_allocated()
+            config: Game = self.__helper.set_server_allocated()
+            self.send_command(f'get5_loadmatch_url http://localhost:8081/config/{self.__server_id}')
+
+    def __listen_to_commands(self, message):
+        print(f"Received message: {message}")
+        self.send_command(message)

@@ -7,13 +7,15 @@ ENV USER=steam \
     STEAMCMDDIR=/home/steam/steamcmd
 
 # Installer les dépendances et configurer les locales
-RUN apt-get update && \
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
     apt-get install -y \
     ca-certificates \
     net-tools \
     wget \
     unzip \
     lib32stdc++6  \
+     gcc-multilib \
     lib32gcc-s1 \
     jq \
     locales \
