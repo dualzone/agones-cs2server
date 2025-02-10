@@ -1,0 +1,4 @@
+include .env
+recursive-include utils/definitions *
+recursive-include server/definitions *
+recursive-include server/ *
