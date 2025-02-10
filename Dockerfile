@@ -15,7 +15,8 @@ RUN dpkg --add-architecture i386 && \
     wget \
     unzip \
     lib32stdc++6  \
-     gcc-multilib \
+    gcc-multilib \
+    libicu-dev \
     lib32gcc-s1 \
     jq \
     locales \
@@ -41,6 +42,7 @@ WORKDIR "${HOMEDIR}"
 
 COPY ./Manager "${HOMEDIR}/Manager"
 COPY entrypoint.sh "${HOMEDIR}/entrypoint.sh"
+COPY  ./gameinfo.gi "${HOMEDIR}/gameinfo.gi.tmp"
 
 
 RUN  set -x && \

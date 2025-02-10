@@ -6,9 +6,12 @@ from fastapi import FastAPI
 import uvicorn
 
 from manager.scanConfig import ScanConfig
+from utils.configureCS2Modding import ConfigureCS2Modding
+from utils.configureLan import ConfigureLan
 from utils.envManager import EnvManager
 from manager import serverManger
 from utils.agonesManager import AgonesManager
+from utils.definitions.serverConfig import Game
 from utils.redis.redisClient import RedisClient
 import asyncio
 
@@ -16,8 +19,15 @@ running: bool = True
 app = FastAPI()
 
 def main():
-    EnvManager.get_env_var("TEST")
-    print("Hello, World!")
+
+    print("Configuration du modding sur CS2")
+    lanConfig: ConfigureLan = ConfigureLan()
+    lanConfig.write_config()
+    configurator: ConfigureCS2Modding = ConfigureCS2Modding()
+    configurator.ensure_modding_line()
+
+    sleep(10)
+
 
     print("Launching Health check...")
     agones = AgonesManager(EnvManager.get_env_var("AGONES_HOST", "127.0.0.1"), 9358)
@@ -47,7 +57,18 @@ def start_api():
 @app.get("/config/{server_id}")
 def read_root(server_id: str):
     print(f"Getting config for server {server_id}")
-    return ScanConfig(server_id).to_json()
+    game: Game = ScanConfig(server_id).get_game_instance()
+    return  game.to_dict()
+
+@app.get("/events/{server_id}")
+def read_root(server_id: str):
+    print("Events")
+    return ""
+
+@app.get("/eventula/{server_id}")
+def read_root(server_id: str):
+    print("eventula")
+    return ""
 
 
 

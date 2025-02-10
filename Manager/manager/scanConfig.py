@@ -76,9 +76,10 @@ class ScanConfig:
 
         # Création et retour de l'instance Game
         return Game(
-            id=game_config[b'id'].decode(),
+            matchid=game_config[b'id'].decode(),
             title=game_config[b'title'].decode(),
             num_maps=int(game_config[b'num_maps']),
+            maplist=[map.decode() for map in game_maps],
             players_per_team=players_per_team,
             min_players_to_ready=int(game_config[b'min_players_to_ready']),
             skip_veto=bool(game_config[b'skip_veto']),

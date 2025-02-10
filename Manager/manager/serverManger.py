@@ -4,6 +4,7 @@ import subprocess
 from platform import system
 from threading import Thread
 
+from utils.configureCS2Modding import ConfigureCS2Modding
 from utils.definitions.serverConfig import Game
 from utils.envManager import EnvManager
 from utils.redis.redisClient import RedisClient
@@ -54,6 +55,10 @@ class ServerManager:
             stderr=subprocess.PIPE,
             text=True
         )
+
+        print("Configuration du modding sur CS2")
+        configurator: ConfigureCS2Modding = ConfigureCS2Modding()
+        configurator.ensure_modding_line()
 
         self.__listen_to_output()
 

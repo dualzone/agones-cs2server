@@ -18,6 +18,6 @@ docker run -it -v cs2_data:/home/steam/cs2server -p 27015:27015/tcp -p 27015:270
 
 
 TODO:
-- Installation propre de GT5, sourcemod et metamod
-- Configuration des events
+- Ajout des novueau status
+- Vérification de la la  ligne dans le gameinfo.gi
 - Pool des event gt5
