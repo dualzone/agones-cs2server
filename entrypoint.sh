@@ -47,7 +47,7 @@ echo "Configuration de gameinfo.gi"
 mv "${HOMEDIR}/gameinfo.gi.tmp" "${HOMEDIR}/cs2server/game/csgo/gameinfo.gi"
 
 wait
-
+mkdir -p /home/steam/cs2server/game/csgo/PugSharp/Config/
 chmod +x "${HOMEDIR}/cs2server/game/bin/linuxsteamrt64/cs2"
 python3 main.py
 
