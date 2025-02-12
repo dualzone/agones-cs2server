@@ -20,7 +20,7 @@ class ServerManager:
         self.__server_id = str(uuid.uuid4()) #"3336752b-4d6e-4668-a39a-a963019a0c57"
         self.__helper: MangerHelper = ManagerHelper(self.__server_id)
         self.__allocator_thread: Thread = self.__redis_client.listen_for_events('gameserver:allocate', self.__redis_event_handler)
-        self.__command_thread: Thread = self.__redis_client.listen_for_events(f'+gameserver:{self.__server_id}:command', self.__listen_to_commands)
+        self.__command_thread: Thread = self.__redis_client.listen_for_events(f'gameserver:{self.__server_id}:command', self.__listen_to_commands)
         home_dir = EnvManager.get_env_var("HOMEDIR")
         bin_dir = 'linuxsteamrt64' if  system() == "Linux" else "win64"
         self.__launcher_path = Path(home_dir).expanduser() / "cs2server/game/bin" / bin_dir
