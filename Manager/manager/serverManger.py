@@ -17,7 +17,7 @@ class ServerManager:
         self.__rcon_password = rcon_password
         self.__server_port = server_port
         self.__redis_client: RedisClient = RedisClient()
-        self.__server_id = "3336752b-4d6e-4668-a39a-a963019a0c57" #str(uuid.uuid4())
+        self.__server_id = str(uuid.uuid4()) #"3336752b-4d6e-4668-a39a-a963019a0c57"
         self.__helper: MangerHelper = ManagerHelper(self.__server_id)
         self.__allocator_thread: Thread = self.__redis_client.listen_for_events('gameserver:allocate', self.__redis_event_handler)
         self.__command_thread: Thread = self.__redis_client.listen_for_events('gameserver:command', self.__listen_to_commands)
