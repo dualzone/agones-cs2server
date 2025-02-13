@@ -1,19 +1,19 @@
-import multiprocessing
-import os
-import threading
-from time import sleep
-from fastapi import FastAPI
-import uvicorn
 
+import multiprocessing
+from time import sleep
+import uvicorn
 from manager.scanConfig import ScanConfig
 from utils.configureCS2Modding import ConfigureCS2Modding
-from utils.configureLan import ConfigureLan
+from utils.definitions.events import EventBase, SeriesStartEvent, MapResultEvent, SeriesEndEvent, SidePickedEvent, \
+    MapPickedEvent, MapVetoedEvent, RoundEndEvent
 from utils.envManager import EnvManager
 from manager import serverManger
 from utils.agonesManager import AgonesManager
 from utils.definitions.serverConfig import Game
 from utils.redis.redisClient import RedisClient
-import asyncio
+from fastapi import FastAPI, Request, HTTPException
+from typing import Dict, Type
+
 
 running: bool = True
 app = FastAPI()
@@ -21,13 +21,8 @@ app = FastAPI()
 def main():
 
     print("Configuration du modding sur CS2")
-    lanConfig: ConfigureLan = ConfigureLan()
-    lanConfig.write_config()
     configurator: ConfigureCS2Modding = ConfigureCS2Modding()
     configurator.ensure_modding_line()
-
-    sleep(10)
-
 
     print("Launching Health check...")
     agones = AgonesManager(EnvManager.get_env_var("AGONES_HOST", "127.0.0.1"), 9358)
@@ -60,15 +55,37 @@ def read_root(server_id: str):
     game: Game = ScanConfig(server_id).get_game_instance()
     return  game.to_dict()
 
-@app.get("/events/{server_id}")
-def read_root(server_id: str):
-    print("Events")
-    return ""
+event_classes: Dict[str, Type[EventBase]] = {
+    "series_start": SeriesStartEvent,
+    "map_result": MapResultEvent,
+    "series_end": SeriesEndEvent,
+    "side_picked": SidePickedEvent,
+    "map_picked": MapPickedEvent,
+    "map_vetoed": MapVetoedEvent,
+    "round_end": RoundEndEvent,
+    #TODO: Match live event
+}
 
-@app.get("/eventula/{server_id}")
-def read_root(server_id: str):
-    print("eventula")
-    return ""
+@app.post("/events/{server_id}")
+async def read_root(server_id: str, request: Request):
+    event_data = await request.json()
+    redis_client: RedisClient = RedisClient()
+    event_type = event_data.get("event")
+    if not event_type or event_type not in event_classes:
+        raise HTTPException(status_code=400, detail="Event type not supported")
+
+    try:
+        event_instance = event_classes[event_type](**event_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid event data: {str(e)}")
+
+    json_data = event_instance.model_dump_json()
+
+    redis_client.publish_event(f"gameserver:{server_id}:event", json_data)
+
+    print(f"📢 Événement reçu: {event_instance}")
+
+
 
 
 

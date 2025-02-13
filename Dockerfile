@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm as build_stage
+FROM python:3.13-slim-bookworm AS build_stage
 
 
 ARG PUID=1100
@@ -8,7 +8,7 @@ ENV USER=steam \
 
 # Installer les dépendances et configurer les locales
 RUN dpkg --add-architecture i386 && \
-    apt-get update && \
+        apt-get update && \
     apt-get install -y \
     ca-certificates \
     net-tools \
@@ -21,7 +21,18 @@ RUN dpkg --add-architecture i386 && \
     jq \
     locales \
     locales-all \
-    curl &&\
+    curl \
+    libtcmalloc-minimal4 \
+    libssl-dev \
+    libstdc++6 \
+    libsdl2-2.0-0 \
+    libx11-6 \
+    libxrandr2 \
+    libxrender1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libjsoncpp25 && \
     useradd -u "${PUID}" -m "${USER}" && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \

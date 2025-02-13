@@ -23,6 +23,7 @@ wait
 
 # Télécharger et mettre à jour le serveur CS2
 echo "Téléchargement et mise à jour du serveur CS2 avec SteamCMD..."
+#
 bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${HOMEDIR}/cs2server" +login anonymous +app_update 730 validate +quit
 
 wait
@@ -30,12 +31,13 @@ wait
 echo "Installation des gt5 et de ses dépendances"
 mkdir "${HOMEDIR}/Downloads"
 wget https://mms.alliedmods.net/mmsdrop/2.0/mmsource-2.0.0-git1319-linux.tar.gz -O "${HOMEDIR}/Downloads/mmsource.linux.tar.gz"
-wget https://github.com/Lan2Play/PugSharp/releases/download/v0.1.12-beta/PugSharp_with_cssharp_and_runtime_linux_0.1.12-beta.zip -O "${HOMEDIR}/Downloads/PugSharp.linux.zip"
-wget https://github.com/hexa-core-eu/SteamWorks/releases/download/v1.2.4/package-linux.zip  -O "${HOMEDIR}/Downloads/steamworks.zip"
+wget https://github.com/roflmuffin/CounterStrikeSharp/releases/download/v305/counterstrikesharp-with-runtime-build-305-linux-e99d27c.zip -O "${HOMEDIR}/Downloads/counterstrikesharp.zip"
+wget https://github.com/shobhit-pathak/MatchZy/releases/download/0.8.8/MatchZy-0.8.8.zip -O "${HOMEDIR}/Downloads/MatchZy.zip"
+
 
 tar -xzf "${HOMEDIR}/Downloads/mmsource.linux.tar.gz" -C "${HOMEDIR}/cs2server/game/csgo" --overwrite
-unzip -o "${HOMEDIR}/Downloads/PugSharp.linux.zip" -d "${HOMEDIR}/cs2server/game/csgo"
-unzip -o "${HOMEDIR}/Downloads/steamworks.zip" -d "${HOMEDIR}/cs2server/game/csgo"
+unzip -o "${HOMEDIR}/Downloads/counterstrikesharp.zip" -d "${HOMEDIR}/cs2server/game/csgo"
+unzip -o "${HOMEDIR}/Downloads/MatchZy.zip" -d "${HOMEDIR}/cs2server/game/csgo"
 
 echo "Installation des dépendances Python"
 cd "${HOMEDIR}/Manager"
@@ -50,4 +52,3 @@ wait
 mkdir -p /home/steam/cs2server/game/csgo/PugSharp/Config/
 chmod +x "${HOMEDIR}/cs2server/game/bin/linuxsteamrt64/cs2"
 python3 main.py
-

@@ -25,8 +25,7 @@ class ScanConfig:
 
         # Vérification de la présence des clés requises
         required_keys = [b'id', b'title', b'num_maps', b'players_per_team', b'min_players_to_ready',
-                         b'skip_veto', b'veto_first', b'favored_percentage_team1', b'min_spectators_to_ready',
-                         b'coaches_per_team']
+                         b'clinch_series']
         for key in required_keys:
             if key not in game_config:
                 raise ValueError(f"Missing required key in game config: {key.decode()}")
@@ -73,18 +72,17 @@ class ScanConfig:
 
         # Création des cvars
         cvars = [CVar(name=k.decode(), value=v.decode()) for k, v in game_vars.items()]
+        cvars.append(CVar(name="matchzy_minimum_ready_required", value=game_config[b'min_players_to_ready'].decode()))
+        cvars.append(CVar(name="hostname", value=team1.name + " vs " + team2.name + " - Match ID: " + game_config[b'id'].decode()))
+        cvars.append(CVar(name="matchzy_show_credits_on_match_start", value=0))
+        cvars.append(CVar(name="matchzy_remote_log_url", value=f'http://localhost:8081/events/{self.uuid}'))
 
         # Création et retour de l'instance Game
         return Game(
             matchid=game_config[b'id'].decode(),
-            title=game_config[b'title'].decode(),
             num_maps=int(game_config[b'num_maps']),
             maplist=[map.decode() for map in game_maps],
             players_per_team=players_per_team,
-            min_players_to_ready=int(game_config[b'min_players_to_ready']),
-            skip_veto=bool(game_config[b'skip_veto']),
-            veto_first=game_config[b'veto_first'].decode(),
-            favored_percentage_team1=int(game_config[b'favored_percentage_team1']),
             team1=team1,
             team2=team2,
             spectators=spectators,

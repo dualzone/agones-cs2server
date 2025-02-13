@@ -14,9 +14,13 @@ class ManagerHelper:
         self.__server_id = server_uuid
         self.__config_error = 0
 
+    def set_server_starting(self):
+        self.__redis_client.publish_event('gameserver:register', self.__server_id)
+        self.__redis_client.get_client().hset("gameserver:status", self.__server_id, "starting")
+
     def set_server_ready(self):
         self.__agones.send_ready()
-        self.__redis_client.publish_event('gameserver:register', self.__server_id)
+        self.__redis_client.publish_event('gameserver:ready', self.__server_id)
         self.__redis_client.get_client().hset("gameserver:status", self.__server_id, "ready")
 
     def set_server_shutdown(self):
@@ -36,7 +40,7 @@ class ManagerHelper:
             config: Game  = scanner.get_game_instance()
             self.__redis_client.publish_event("gameserver:configValidate", self.__server_id)
             print("Config parsed successfully")
-            return Game
+            return config
         except ValueError as e:
             print("Error parsing config, retrying  in 10 seconds")
             self.__redis_client.publish_event("gameserver:configError", self.__server_id)

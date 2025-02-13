@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 from platform import system
 from threading import Thread
-
+from time import sleep
 from utils.configureCS2Modding import ConfigureCS2Modding
 from utils.definitions.serverConfig import Game
 from utils.envManager import EnvManager
@@ -18,16 +18,18 @@ class ServerManager:
         self.__server_port = server_port
         self.__redis_client: RedisClient = RedisClient()
         self.__server_id = str(uuid.uuid4()) #"3336752b-4d6e-4668-a39a-a963019a0c57"
-        self.__helper: MangerHelper = ManagerHelper(self.__server_id)
+        self.__helper: ManagerHelper = ManagerHelper(self.__server_id)
         self.__allocator_thread: Thread = self.__redis_client.listen_for_events('gameserver:allocate', self.__redis_event_handler)
         self.__command_thread: Thread = self.__redis_client.listen_for_events(f'gameserver:{self.__server_id}:command', self.__listen_to_commands)
         home_dir = EnvManager.get_env_var("HOMEDIR")
         bin_dir = 'linuxsteamrt64' if  system() == "Linux" else "win64"
         self.__launcher_path = Path(home_dir).expanduser() / "cs2server/game/bin" / bin_dir
         self.__configure_process()
-        self.__helper.set_server_ready()
+        self.__helper.set_server_starting()
         self.__allocator_thread.start()
         self.__command_thread.start()
+        self.__started = False
+        self.__allocated = False
 
     def __configure_process(self):
         args = [
@@ -47,7 +49,7 @@ class ServerManager:
         launcher_ext = '.exe' if system() != "Linux" else ""
         launch_path = self.__launcher_path / ('cs2' + launcher_ext)
         print(launch_path)
-        self.__cs2_server_process = subprocess.Popen(
+        self.__cs2_server_process: subprocess = subprocess.Popen(
             [str(launch_path)] + args,
             cwd=str(self.__launcher_path),
             stdin=subprocess.PIPE,
@@ -66,11 +68,14 @@ class ServerManager:
         def read_stream(stream, prefix):
             for line in iter(stream.readline, ''):
                 if 'CTextConsoleWin::GetLine: !GetNumberOfConsoleInputEvents' in line: continue
+                if '[MatchZy] [StartWarmup] Starting warmup!' in line and not self.__started:
+                    self.__helper.set_server_ready()
+                    self.__started = True
                 print(f'[{prefix}]: {line.strip()}')
 
         import threading
         threading.Thread(target=read_stream, args=(self.__cs2_server_process.stdout, 'CS2'), daemon=True).start()
-        threading.Thread(target=read_stream, args=(self.__cs2_server_process.stderr, 'Erreur CS2'), daemon=True).start()
+        threading.Thread(target=read_stream, args=(self.__cs2_server_process.stderr, 'CS2'), daemon=True).start()
 
     def stop_server(self):
         if self.__cs2_server_process and self.__cs2_server_process.poll() is None:
@@ -98,13 +103,14 @@ class ServerManager:
 
     def __server_exit_handler(self):
         self.__helper.set_server_shutdown()
+        sleep(5)
         self.__redis_client.close()
 
     def __redis_event_handler(self, message):
         print(f"Received message: {message}")
         if message == self.__server_id:
             config: Game = self.__helper.set_server_allocated()
-            self.send_command(f'get5_loadmatch_url http://localhost:8081/config/{self.__server_id}')
+            self.send_command(f'matchzy_loadmatch_url "http://localhost:8081/config/{self.__server_id}"')
 
     def __listen_to_commands(self, message):
         print(f"Received message: {message}")
