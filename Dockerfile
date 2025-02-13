@@ -1,4 +1,4 @@
-FROM node:current-bookworm-slim as build_stage
+FROM python:3.13-slim-bookworm AS build_stage
 
 
 ARG PUID=1100
@@ -7,18 +7,32 @@ ENV USER=steam \
     STEAMCMDDIR=/home/steam/steamcmd
 
 # Installer les dépendances et configurer les locales
-RUN apt-get update && \
+RUN dpkg --add-architecture i386 && \
+        apt-get update && \
     apt-get install -y \
     ca-certificates \
     net-tools \
     wget \
     unzip \
     lib32stdc++6  \
+    gcc-multilib \
+    libicu-dev \
     lib32gcc-s1 \
     jq \
     locales \
     locales-all \
-    curl &&\
+    curl \
+    libtcmalloc-minimal4 \
+    libssl-dev \
+    libstdc++6 \
+    libsdl2-2.0-0 \
+    libx11-6 \
+    libxrandr2 \
+    libxrender1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libjsoncpp25 && \
     useradd -u "${PUID}" -m "${USER}" && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
@@ -37,8 +51,9 @@ FROM build_stage AS dualzone-cs2server
 # Définir le répertoire de travail pour SteamCMD et le serveur
 WORKDIR "${HOMEDIR}"
 
-COPY ./ServerManager "${HOMEDIR}/ServerManager"
+COPY ./Manager "${HOMEDIR}/Manager"
 COPY entrypoint.sh "${HOMEDIR}/entrypoint.sh"
+COPY  ./gameinfo.gi "${HOMEDIR}/gameinfo.gi.tmp"
 
 
 RUN  set -x && \
