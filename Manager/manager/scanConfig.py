@@ -25,7 +25,7 @@ class ScanConfig:
 
         # Vérification de la présence des clés requises
         required_keys = [b'id', b'title', b'num_maps', b'players_per_team', b'min_players_to_ready',
-                         b'clinch_series']
+                         b'clinch_series', b'skip_veto', b'veto_first', b'side_type']
         for key in required_keys:
             if key not in game_config:
                 raise ValueError(f"Missing required key in game config: {key.decode()}")
@@ -87,7 +87,18 @@ class ScanConfig:
             team2=team2,
             spectators=spectators,
             cvars=cvars,
+            side_type=game_config[b'side_type'].decode(),
+            clinch_series=self.__parse_bool(game_config[b'clinch_series'].decode()),
+            skip_veto=self.__parse_bool(game_config[b'skip_veto'].decode()),
+            veto_first=game_config[b'veto_first'].decode()
         )
+
+    def __parse_bool(self, string: str) -> bool:
+        string = string.lower()
+        if string in ('y', 'yes', 't', 'true', 'on', '1'):
+            return True
+        else:
+            return False
 
     def to_json(self) -> str:
         game = self.get_game_instance()

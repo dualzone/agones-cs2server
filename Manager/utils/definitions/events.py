@@ -101,6 +101,8 @@ class MapVetoedEvent(EventBase):
     team: str
     map_name: str
 
+class MatchGoingLiveEvent(EventBase):
+    map_number: int
 
 class RoundEndEvent(EventBase):
     map_number: int
