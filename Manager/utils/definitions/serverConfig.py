@@ -46,8 +46,10 @@ class Game:
     team2: Team
     spectators: Spectators
     cvars: List[CVar]
-    map_sides: List[str] = field(default_factory=lambda: ["team1_ct", "team2_ct", "knife"])
     clinch_series: bool = True
+    skip_veto: bool = False
+    veto_first: str = "random"
+    side_type: str = "standard"
 
     def to_dict(self) -> Dict[str, any]:
         return {
@@ -56,11 +58,13 @@ class Game:
             "team2": self.team2.to_dict(),
             "num_maps": self.num_maps,#
             "maplist": self.maplist,
-            "map_sides": self.map_sides,
             "spectators": self.spectators.to_dict(),
             "clinch_series": self.clinch_series,
             "players_per_team": self.players_per_team,#
-            "cvars": {cvar.name: cvar.value for cvar in self.cvars}
+            "cvars": {cvar.name: cvar.value for cvar in self.cvars},
+            "skip_veto": self.skip_veto,
+            "veto_first": self.veto_first,
+            "side_type": self.side_type
         }
 
 

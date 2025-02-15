@@ -20,12 +20,14 @@ class ServerManager:
         self.__server_id = str(uuid.uuid4()) #"3336752b-4d6e-4668-a39a-a963019a0c57"
         self.__helper: ManagerHelper = ManagerHelper(self.__server_id)
         self.__allocator_thread: Thread = self.__redis_client.listen_for_events('gameserver:allocate', self.__redis_event_handler)
+        self.__reset_thead: Thread = self.__redis_client.listen_for_events('gameserver:reset',self.__server_reset_handler)
         self.__command_thread: Thread = self.__redis_client.listen_for_events(f'gameserver:{self.__server_id}:command', self.__listen_to_commands)
         home_dir = EnvManager.get_env_var("HOMEDIR")
         bin_dir = 'linuxsteamrt64' if  system() == "Linux" else "win64"
         self.__launcher_path = Path(home_dir).expanduser() / "cs2server/game/bin" / bin_dir
         self.__configure_process()
         self.__helper.set_server_starting()
+        self.__reset_thead.start()
         self.__allocator_thread.start()
         self.__command_thread.start()
         self.__started = False
@@ -105,6 +107,12 @@ class ServerManager:
         self.__helper.set_server_shutdown()
         sleep(5)
         self.__redis_client.close()
+
+    def __server_reset_handler(self, message):
+        if message == self.__server_id:
+            self.__helper.set_server_starting()
+            self.__started = False
+            self.__allocated = False
 
     def __redis_event_handler(self, message):
         print(f"Received message: {message}")

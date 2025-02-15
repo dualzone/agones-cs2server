@@ -5,7 +5,7 @@ import uvicorn
 from manager.scanConfig import ScanConfig
 from utils.configureCS2Modding import ConfigureCS2Modding
 from utils.definitions.events import EventBase, SeriesStartEvent, MapResultEvent, SeriesEndEvent, SidePickedEvent, \
-    MapPickedEvent, MapVetoedEvent, RoundEndEvent
+    MapPickedEvent, MapVetoedEvent, RoundEndEvent, MatchGoingLiveEvent
 from utils.envManager import EnvManager
 from manager import serverManger
 from utils.agonesManager import AgonesManager
@@ -63,7 +63,7 @@ event_classes: Dict[str, Type[EventBase]] = {
     "map_picked": MapPickedEvent,
     "map_vetoed": MapVetoedEvent,
     "round_end": RoundEndEvent,
-    #TODO: Match live event
+    "going_live": MatchGoingLiveEvent,
 }
 
 @app.post("/events/{server_id}")
@@ -73,19 +73,14 @@ async def read_root(server_id: str, request: Request):
     event_type = event_data.get("event")
     if not event_type or event_type not in event_classes:
         raise HTTPException(status_code=400, detail="Event type not supported")
-
     try:
         event_instance = event_classes[event_type](**event_data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid event data: {str(e)}")
-
     json_data = event_instance.model_dump_json()
-
     redis_client.publish_event(f"gameserver:{server_id}:event", json_data)
-
-    print(f"📢 Événement reçu: {event_instance}")
-
-
+    if event_instance.event == "map_result":
+        redis_client.publish_event(f"gameserver:reset", server_id)
 
 
 
