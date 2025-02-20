@@ -10,7 +10,7 @@ from utils.definitions.serverConfig import Game
 class ManagerHelper:
     def __init__(self, server_uuid: str):
         self.__redis_client: RedisClient = RedisClient()
-        self.__agones: AgonesManager = AgonesManager(EnvManager.get_env_var("AGONES_HOST", "127.0.0.1"), 9358)
+        #self.__agones: AgonesManager = AgonesManager(EnvManager.get_env_var("AGONES_HOST", "127.0.0.1"), 9358)
         self.__server_id = server_uuid
         self.__config_error = 0
 
@@ -19,18 +19,18 @@ class ManagerHelper:
         self.__redis_client.get_client().hset("gameserver:status", self.__server_id, "starting")
 
     def set_server_ready(self):
-        self.__agones.send_ready()
+        #self.__agones.send_ready()
         self.__redis_client.publish_event('gameserver:ready', self.__server_id)
         self.__redis_client.get_client().hset("gameserver:status", self.__server_id, "ready")
 
     def set_server_shutdown(self):
         self.__redis_client.get_client().hdel("gameserver:status", self.__server_id)
-        self.__agones.send_shutdown()
+        #self.__agones.send_shutdown()
 
     def set_server_allocated(self) -> Game:
         config: Game = self.__parse_redis_config()
-        self.__agones.send_allocate()
-        print(self.__agones.get_info())
+        #self.__agones.send_allocate()
+        #print(self.__agones.get_info())
         self.__redis_client.get_client().hset("gameserver:status", self.__server_id, "allocated")
         return config
 
