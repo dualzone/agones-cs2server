@@ -1,23 +1,75 @@
-apiVersion: agones.dev/v1
-kind: GameServer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  generateName: nodejs-simple-
+  name: cs2-storage
 spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 60Gi
+  storageClassName: longhorn-noreplica
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cs2-server
+  labels:
+    app: cs2
+spec:
+  initContainers:
+  - name: fix-perms
+    image: busybox
+    command: ["sh", "-c", "chown -R 1100:1100 /home/steam/cs2server"]
+    volumeMounts:
+      - name: cs2-data
+        mountPath: /home/steam/cs2server
+  containers:
+    - name: cs2
+      image: ghcr.io/dualzone/agones-cs2server:prod
+      imagePullPolicy: Always
+      env:
+        - name: CS2_STEAM_TOKEN
+          value: "B5A1A49AD2F8158F7E4B1BE2BC15BC20"
+        - name: CS2_RCON_PASSWORD
+          value: "test"
+        - name: REDIS_HOST
+          value: ""
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: REDIS_PASSWORD
+          value: ""
+      ports:
+        - containerPort: 27015
+          protocol: UDP
+      volumeMounts:
+        - name: cs2-data
+          mountPath: /home/steam/cs2server
+  volumes:
+    - name: cs2-data
+      persistentVolumeClaim:
+        claimName: cs2-storage
+  restartPolicy: Always
+  imagePullSecrets:
+    - name: ghcr-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cs2-service
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 172.20.0.110
+    metallb.universe.tf/ip-allocated-from-pool: internal-pool
+    metallb.universe.tf/allow-shared-ip: cs2-shared-ip
+spec:
+  type: LoadBalancer
+  selector:
+    app: cs2
   ports:
-    - name: default
-      portPolicy: Dynamic
-      containerPort: 75015
-  health:
-    # waits for 30 seconds before checking health
-    initialDelaySeconds: 30
-    # health ping sends every 20 seconds, so let's give it 5 seconds buffer
-    periodSeconds: 25
-  template:
-    spec:
-      containers:
-        - name: nodejs-simple
-          image: cs2server
-          resources:
-            requests:
-              memory: 2Gi
-              cpu: 1
+    - name: cs2-udp
+      port: 20000
+      targetPort: 27015
+      protocol: UDP
