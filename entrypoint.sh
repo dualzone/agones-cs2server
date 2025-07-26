@@ -30,9 +30,9 @@ wait
 
 echo "Installation des gt5 et de ses dépendances"
 mkdir "${HOMEDIR}/Downloads"
-wget https://mms.alliedmods.net/mmsdrop/2.0/mmsource-2.0.0-git1319-linux.tar.gz -O "${HOMEDIR}/Downloads/mmsource.linux.tar.gz"
-wget https://github.com/roflmuffin/CounterStrikeSharp/releases/download/v305/counterstrikesharp-with-runtime-build-305-linux-e99d27c.zip -O "${HOMEDIR}/Downloads/counterstrikesharp.zip"
-wget https://github.com/shobhit-pathak/MatchZy/releases/download/0.8.8/MatchZy-0.8.8.zip -O "${HOMEDIR}/Downloads/MatchZy.zip"
+wget https://mms.alliedmods.net/mmsdrop/2.0/mmsource-2.0.0-git1359-linux.tar.gz -O "${HOMEDIR}/Downloads/mmsource.linux.tar.gz"
+wget https://github.com/roflmuffin/CounterStrikeSharp/releases/download/v1.0.327/counterstrikesharp-with-runtime-linux-1.0.327.zip -O "${HOMEDIR}/Downloads/counterstrikesharp.zip"
+wget https://github.com/shobhit-pathak/MatchZy/releases/download/0.8.10/MatchZy-0.8.10.zip -O "${HOMEDIR}/Downloads/MatchZy.zip"
 
 
 tar -xzf "${HOMEDIR}/Downloads/mmsource.linux.tar.gz" -C "${HOMEDIR}/cs2server/game/csgo" --overwrite
